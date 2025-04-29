@@ -289,7 +289,15 @@ class AuthControllers {
 
     const { _id } = req.user;
 
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      throw new ApiError(STATUS_CODE.BAD_REQUEST, "Missing password input");
+    }
+
+    if (!confirmNewPassword || confirmNewPassword !== newPassword) {
+      throw new ApiError(STATUS_CODE.BAD_REQUEST, "Invalid password input");
+    }
 
     const user = await UserModel.findOne(_id as unknown as ObjectId);
 
