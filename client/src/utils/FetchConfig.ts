@@ -20,12 +20,16 @@ class FetchConfig {
   }
 
   private createFormData(
-    jsonData: {
-      [key: string]: any;
-    },
-    files: {
-      [key: string]: File[];
-    },
+    jsonData:
+      | {
+          [key: string]: any;
+        }
+      | undefined,
+    files:
+      | {
+          [key: string]: File[];
+        }
+      | undefined,
   ) {
     const newFormData = new FormData();
 
@@ -44,11 +48,7 @@ class FetchConfig {
   }
 
   //GET REQUEST
-  private call = async function (
-    url: string,
-    method: string,
-    formData: FormData,
-  ) {
+  private call = async (url: string, method: string, formData: FormData) => {
     try {
       const res = await fetch(String(this.api) + String(url), {
         method: method,
@@ -57,7 +57,7 @@ class FetchConfig {
         headers: {
           "Content-Type": "application/json",
           Authorization: tokens.getAccessToken(),
-        },
+        } as HeadersInit,
         body: formData,
       });
 
@@ -68,7 +68,19 @@ class FetchConfig {
     }
   };
 
-  async get(url = "", formData = undefined, files = undefined) {
+  async get(
+    url = "",
+    formData:
+      | {
+          [key: string]: any;
+        }
+      | undefined = undefined,
+    files:
+      | {
+          [key: string]: File[];
+        }
+      | undefined = undefined,
+  ) {
     try {
       const res = await this.call(
         url,
@@ -80,9 +92,21 @@ class FetchConfig {
       return error;
     }
   }
-  async post(url = "", formData = undefined, files = undefined) {
+  async post(
+    url = "",
+    formData:
+      | {
+          [key: string]: any;
+        }
+      | undefined = undefined,
+    files:
+      | {
+          [key: string]: File[];
+        }
+      | undefined = undefined,
+  ) {
     try {
-      const res = await this.#call(
+      const res = await this.call(
         url,
         this.METHODS.POST,
         this.createFormData(formData, files),
@@ -92,9 +116,21 @@ class FetchConfig {
       return error;
     }
   }
-  async put(url = "", formData = undefined, files = undefined) {
+  async put(
+    url = "",
+    formData:
+      | {
+          [key: string]: any;
+        }
+      | undefined = undefined,
+    files:
+      | {
+          [key: string]: File[];
+        }
+      | undefined = undefined,
+  ) {
     try {
-      const res = await this.#call(
+      const res = await this.call(
         url,
         this.METHODS.PUT,
         this.createFormData(formData, files),
@@ -104,9 +140,21 @@ class FetchConfig {
       return error;
     }
   }
-  async patch(url = "", formData = undefined, files = undefined) {
+  async patch(
+    url = "",
+    formData:
+      | {
+          [key: string]: any;
+        }
+      | undefined = undefined,
+    files:
+      | {
+          [key: string]: File[];
+        }
+      | undefined = undefined,
+  ) {
     try {
-      const res = await this.#call(
+      const res = await this.call(
         url,
         this.METHODS.PATCH,
         this.createFormData(formData, files),
@@ -116,9 +164,21 @@ class FetchConfig {
       return error;
     }
   }
-  async options(url = "", formData = undefined, files = undefined) {
+  async options(
+    url = "",
+    formData:
+      | {
+          [key: string]: any;
+        }
+      | undefined = undefined,
+    files:
+      | {
+          [key: string]: File[];
+        }
+      | undefined = undefined,
+  ) {
     try {
-      const res = await this.#call(
+      const res = await this.call(
         url,
         this.METHODS.OPTIONS,
         this.createFormData(formData, files),
@@ -128,7 +188,19 @@ class FetchConfig {
       return error;
     }
   }
-  async head(url = "", formData = undefined, files = undefined) {
+  async head(
+    url = "",
+    formData:
+      | {
+          [key: string]: any;
+        }
+      | undefined = undefined,
+    files:
+      | {
+          [key: string]: File[];
+        }
+      | undefined = undefined,
+  ) {
     try {
       const res = await this.call(
         url,
