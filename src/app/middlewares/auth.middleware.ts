@@ -40,21 +40,13 @@ class AuthMiddleware {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
 
-    req.user = {
-      _id: user._id.toString(),
-    };
+    req.user = user;
 
     next();
   });
 
   isEmailVerified = AsyncHandler(async (req, _, next) => {
-    if (!req.user) {
-      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
-    }
-
-    const { _id } = req.user;
-
-    const user = await UserModel.findOne(_id as unknown as ObjectId).lean();
+    const user = req.user;
 
     if (!user) {
       throw new ApiError(STATUS_CODE.NOT_FOUND, "User not found");
