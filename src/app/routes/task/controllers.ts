@@ -186,7 +186,10 @@ class TaskControllers {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
 
-    if (userRole === USER_ROLES.MEMBER && task.assignedTo.toString() !== _id) {
+    if (
+      userRole === USER_ROLES.MEMBER &&
+      task.assignedTo.toString() !== _id.toString()
+    ) {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
 
