@@ -8,6 +8,7 @@ import type { Router } from "express";
 import { TaskControllers } from "./controllers";
 import { verifyRoleBasedAccess } from "../../middlewares/role-based-access.middleware";
 import { USER_ROLES } from "../../constants/enums.constants";
+import { taskUpload } from "../../middlewares/file-handling.middleware";
 
 function register(): Router {
   const router = express.Router();
@@ -33,6 +34,7 @@ function register(): Router {
       verifyAccessToken,
       isEmailVerified,
       verifyRoleBasedAccess([USER_ROLES.ADMIN, USER_ROLES.PROJECT_ADMIN]),
+      taskUpload,
       controllers.createTask.bind(controllers),
     );
 

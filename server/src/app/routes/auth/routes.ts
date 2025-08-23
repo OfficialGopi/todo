@@ -1,6 +1,8 @@
 import express from "express";
 import { verifyAccessToken } from "../../middlewares/auth.middleware";
 import { AuthControllers } from "./controllers";
+import { validateBody } from "../../middlewares/validation.middleware";
+import { authValidators } from "../../validators/auth.validators";
 
 import type { Router } from "express";
 
@@ -9,9 +11,19 @@ function register(): Router {
 
   const controllers = new AuthControllers();
 
-  router.route("/signup").post(controllers.signup.bind(controllers));
+  router
+    .route("/signup")
+    .post(
+      validateBody([authValidators.validateSignupObject]),
+      controllers.signup.bind(controllers),
+    );
 
-  router.route("/login").post(controllers.login.bind(controllers));
+  router
+    .route("/login")
+    .post(
+      validateBody([authValidators.validateAuthLoginObject]),
+      controllers.login.bind(controllers),
+    );
 
   router
     .route("/verify-email/:token")
@@ -36,10 +48,10 @@ function register(): Router {
     .route("/change-current-password")
     .put(
       verifyAccessToken,
+      validateBody([authValidators.validateAuthChangeCurrentPasswordObject]),
       controllers.changeCurrentPassword.bind(controllers),
     );
 
-  // NOT FINISHED YET
   router
     .route("/forgot-password-request")
     .post(controllers.forgotPasswordRequest.bind(controllers));

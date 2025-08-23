@@ -8,11 +8,26 @@ import { AsyncHandler } from "../../utils/async-handler";
 
 class NotesControllers {
   public getNotes = AsyncHandler(async (req, res) => {
+    if (!req.user) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
+    
+    const { _id } = req.user;
     const { projectId } = req.params;
+
+    // Check if user is project member
+    const userRole = await ProjectMemberModel.findOne({
+      project: projectId,
+      user: _id,
+    });
+
+    if (!userRole) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
 
     const notes = await NoteModel.find({
       project: projectId,
-    });
+    }).populate("createdBy", "name username avatar");
 
     return res
       .status(STATUS_CODE.OK)
@@ -45,14 +60,33 @@ class NotesControllers {
   });
 
   public getNoteById = AsyncHandler(async (req, res) => {
-    const { noteId } = req.params;
+    if (!req.user) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
+    
+    const { _id } = req.user;
+    const { noteId, projectId } = req.params;
+    
     const note = await NoteModel.findById(noteId);
     if (!note) {
       throw new ApiError(STATUS_CODE.NOT_FOUND, "Note not found");
     }
+
+    // Check if user is project member
+    const userRole = await ProjectMemberModel.findOne({
+      project: projectId,
+      user: _id,
+    });
+
+    if (!userRole) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
+
+    const populatedNote = await NoteModel.findById(noteId).populate("createdBy", "name username avatar");
+    
     return res
       .status(STATUS_CODE.OK)
-      .json(new ApiResponse(STATUS_CODE.OK, note, "Note found successfully"));
+      .json(new ApiResponse(STATUS_CODE.OK, populatedNote, "Note found successfully"));
   });
 
   public updateNote = AsyncHandler(async (req, res) => {

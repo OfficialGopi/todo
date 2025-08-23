@@ -1,4 +1,3 @@
-import { unlinkSync } from "fs";
 import { STATUS_CODE } from "../../constants/statusCodes.constants";
 import { TaskModel } from "../../models/task";
 import { ApiError } from "../../utils/api-error";
@@ -6,7 +5,7 @@ import { ApiResponse } from "../../utils/api-response";
 import { AsyncHandler } from "../../utils/async-handler";
 import { uploadOnCloudinary } from "../../utils/cloudinary- config";
 import { ProjectMemberModel } from "../../models/project-member";
-import { USER_ROLES } from "../../constants/enums.constants";
+import { USER_ROLES, TASK_STATUS } from "../../constants/enums.constants";
 import { SubTaskModel } from "../../models/subtask";
 
 class TaskControllers {
@@ -59,16 +58,12 @@ class TaskControllers {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
 
-    const files = req.files as Express.Multer.File[];
+    const files = req.files as any[];
     const attachments = [];
     for (const file of files) {
       const result = await uploadOnCloudinary(file.path);
 
       if (!result) {
-        for (const f of files) {
-          unlinkSync(f.path);
-        }
-
         throw new ApiError(STATUS_CODE.BAD_REQUEST, "File upload failed");
       }
 
@@ -98,19 +93,74 @@ class TaskControllers {
         ),
       );
   });
-  //UPDATE TASK REMAINING
   public updateTask = AsyncHandler(async (req, res) => {
     if (!req.user) {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
     const { _id } = req.user;
     const { projectId, taskId } = req.params;
-    const { title, description, assignedTo } = req.body;
+    const { title, description, assignedTo, status } = req.body;
 
     const task = await TaskModel.findById(taskId);
     if (!task || task.project.toString() !== projectId) {
       throw new ApiError(STATUS_CODE.NOT_FOUND, "Task not found");
     }
+
+    // Check if user has permission to update this task
+    const userRole = await ProjectMemberModel.findOne({
+      project: projectId,
+      user: _id,
+    });
+
+    if (!userRole) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
+
+    // Only task creator or admin can update task details
+    if (userRole.role === USER_ROLES.MEMBER && task.assignedBy.toString() !== _id.toString()) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
+
+    // Update fields if provided
+    if (title && title.trim() !== task.title.trim()) {
+      task.title = title.trim();
+    }
+
+    if (description !== undefined && description !== task.description) {
+      task.description = description;
+    }
+
+    if (assignedTo && assignedTo !== task.assignedTo.toString()) {
+      // Verify the new assignee is a project member
+      const isUserInProject = await ProjectMemberModel.findOne({
+        project: projectId,
+        user: assignedTo,
+      });
+
+      if (!isUserInProject) {
+        throw new ApiError(STATUS_CODE.BAD_REQUEST, "User is not a project member");
+      }
+      task.assignedTo = assignedTo;
+    }
+
+    if (status && status !== task.status) {
+      if (![TASK_STATUS.TODO, TASK_STATUS.IN_PROGRESS, TASK_STATUS.DONE].includes(status)) {
+        throw new ApiError(STATUS_CODE.BAD_REQUEST, "Invalid status");
+      }
+      task.status = status;
+    }
+
+    await task.save();
+
+    return res
+      .status(STATUS_CODE.OK)
+      .json(
+        new ApiResponse(
+          STATUS_CODE.OK,
+          task,
+          "Task updated successfully",
+        ),
+      );
   });
 
   public deleteTask = AsyncHandler(async (req, res) => {

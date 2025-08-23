@@ -1,4 +1,3 @@
-import { resolveSoa } from "dns";
 import { STATUS_CODE } from "../../constants/statusCodes.constants";
 import { ProjectModel } from "../../models/project";
 import { ProjectMemberModel } from "../../models/project-member";
@@ -104,11 +103,18 @@ class ProjectsControllers {
     if (!req.user) {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
+    const { _id } = req.user;
     const { projectId } = req.params;
     const { name, description } = req.body;
+    
     const project = await ProjectModel.findById(projectId);
     if (!project) {
       throw new ApiError(STATUS_CODE.NOT_FOUND, "Project not found");
+    }
+
+    // Check if user is project creator or admin
+    if (project.createdBy.toString() !== _id.toString()) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
 
     if (!name && !description) {
@@ -130,7 +136,7 @@ class ProjectsControllers {
     return res
       .status(STATUS_CODE.OK)
       .json(
-        new ApiResponse(STATUS_CODE.OK, {}, "Project updated successfully"),
+        new ApiResponse(STATUS_CODE.OK, project, "Project updated successfully"),
       );
   });
 
@@ -234,9 +240,23 @@ class ProjectsControllers {
   });
 
   public updateMemberRoleInProject = AsyncHandler(async (req, res) => {
+    if (!req.user) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
+    
+    const { _id } = req.user;
     const { userId } = req.body;
-
     const { projectId } = req.params;
+
+    // Check if user has permission to update roles
+    const userRole = await ProjectMemberModel.findOne({
+      project: projectId,
+      user: _id,
+    });
+
+    if (!userRole || userRole.role !== USER_ROLES.ADMIN) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
 
     const projectMember = await ProjectMemberModel.findOne({
       project: projectId,
@@ -274,23 +294,42 @@ class ProjectsControllers {
       );
   });
 
-  //DELETE MEMBER FROM PROJECT IS NOT FINISHED AS IF DELETING THE USER AND TASKS ARE ASSIGNED HAVE TO BE NULL OR DELETE
   public deleteMemberFromProject = AsyncHandler(async (req, res) => {
     if (!req.user) {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
 
+    const { _id } = req.user;
     const { projectId } = req.params;
-
     const { userId } = req.body;
 
-    const project = await ProjectMemberModel.deleteOne({
+    // Check if user has permission to delete members
+    const userRole = await ProjectMemberModel.findOne({
+      project: projectId,
+      user: _id,
+    });
+
+    if (!userRole || userRole.role !== USER_ROLES.ADMIN) {
+      throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
+    }
+
+    // Don't allow deleting the project creator
+    const project = await ProjectModel.findById(projectId);
+    if (project && project.createdBy.toString() === userId) {
+      throw new ApiError(STATUS_CODE.BAD_REQUEST, "Cannot delete project creator");
+    }
+
+    const result = await ProjectMemberModel.deleteOne({
       project: projectId,
       user: userId,
       role: {
         $in: [USER_ROLES.MEMBER, USER_ROLES.PROJECT_ADMIN],
       },
     });
+
+    if (result.deletedCount === 0) {
+      throw new ApiError(STATUS_CODE.NOT_FOUND, "User not found in project");
+    }
 
     return res
       .status(STATUS_CODE.DELETED_SUCCESSFULLY)

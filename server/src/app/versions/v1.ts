@@ -13,7 +13,7 @@ function v1(): Router {
   router.use("/auth", registerAuthRoutes());
   router.use("/project", registerProjectRoutes());
   router.use("/project/id/:projectId/note", registerNoteRoutes());
-  router.use("/project/id/:projjectId/task", registerTaskRoutes());
+  router.use("/project/id/:projectId/task", registerTaskRoutes());
 
   return router;
 }

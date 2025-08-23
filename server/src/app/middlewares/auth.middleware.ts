@@ -9,7 +9,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 class AuthMiddleware {
   verifyAccessToken = AsyncHandler(async (req, res, next) => {
     const accessToken =
-      (req.cookies["access-token"] as string).trim() ??
+      (req.cookies["access-token"] as string)?.trim() ??
       (req.headers?.Authorization as string | undefined)?.trim().split(" ")[1];
 
     if (!accessToken) {
