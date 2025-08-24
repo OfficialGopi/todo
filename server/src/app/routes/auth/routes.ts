@@ -12,7 +12,7 @@ function register(): Router {
   const controllers = new AuthControllers();
 
   router
-    .route("/signup")
+    .route("/register")
     .post(
       validateBody([authValidators.validateSignupObject]),
       controllers.signup.bind(controllers),
@@ -48,7 +48,9 @@ function register(): Router {
     .route("/change-current-password")
     .put(
       verifyAccessToken,
-      validateBody([authValidators.validateAuthChangeCurrentPasswordObject]),
+      validateBody([
+        authValidators.validateAuthChangeCurrentPasswordObject,
+      ] as any),
       controllers.changeCurrentPassword.bind(controllers),
     );
 

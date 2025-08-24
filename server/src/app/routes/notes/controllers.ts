@@ -11,7 +11,7 @@ class NotesControllers {
     if (!req.user) {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
-    
+
     const { _id } = req.user;
     const { projectId } = req.params;
 
@@ -63,10 +63,10 @@ class NotesControllers {
     if (!req.user) {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
-    
+
     const { _id } = req.user;
     const { noteId, projectId } = req.params;
-    
+
     const note = await NoteModel.findById(noteId);
     if (!note) {
       throw new ApiError(STATUS_CODE.NOT_FOUND, "Note not found");
@@ -82,11 +82,20 @@ class NotesControllers {
       throw new ApiError(STATUS_CODE.UNAUTHORIZED, "Unauthorized");
     }
 
-    const populatedNote = await NoteModel.findById(noteId).populate("createdBy", "name username avatar");
-    
+    const populatedNote = await NoteModel.findById(noteId).populate(
+      "createdBy",
+      "name username avatar",
+    );
+
     return res
       .status(STATUS_CODE.OK)
-      .json(new ApiResponse(STATUS_CODE.OK, populatedNote, "Note found successfully"));
+      .json(
+        new ApiResponse(
+          STATUS_CODE.OK,
+          populatedNote as any,
+          "Note found successfully",
+        ),
+      );
   });
 
   public updateNote = AsyncHandler(async (req, res) => {

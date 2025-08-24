@@ -106,15 +106,15 @@ class AuthControllers {
   });
 
   public login = AsyncHandler(async (req, res) => {
-    const { credentials, password } = req.body;
+    const { credential, password } = req.body;
 
     const user = await UserModel.findOne({
       $or: [
         {
-          email: credentials,
+          email: credential,
         },
         {
-          username: credentials,
+          username: credential,
         },
       ],
     }).select(
@@ -399,13 +399,7 @@ class AuthControllers {
 
     return res
       .status(STATUS_CODE.OK)
-      .json(
-        new ApiResponse(
-          STATUS_CODE.OK,
-          {},
-          "Password reset successfully",
-        ),
-      );
+      .json(new ApiResponse(STATUS_CODE.OK, {}, "Password reset successfully"));
   });
 }
 

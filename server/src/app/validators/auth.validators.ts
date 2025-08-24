@@ -45,7 +45,7 @@ class AuthValidators {
 
   validateAuthLoginObject = z
     .object({
-      credentials: z.string().trim(),
+      credential: z.string().trim(),
       password: z.string().min(8, "Password does not match"),
     })
     .strict()
